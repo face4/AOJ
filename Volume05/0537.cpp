@@ -1,30 +1,24 @@
 #include<iostream>
-#include<cstring>
+#include<vector>
 using namespace std;
 
-const int mod = 1e5;
-int dp[50][3001] = {};
+const int mod = 100000;
 
 int main(){
     int n, m, s;
     while(cin >> n >> m >> s, n+m+s){
-        n *= n;
-        memset(dp, 0, sizeof(dp));
+        vector<vector<int>> dp(n*n+1, vector<int>(s+1,0));
         dp[0][0] = 1;
-
-        // i...今部分和の構成員として採用しようとしている数
-        for(int i = 1; i <= m; i++){
-            //　j...iを含めた項数
-            for(int j = n; j > 0; j--){
-                // k...iを含める前のj-1項の和
-                for(int k = 0; k <= s-i; k++){
-                    dp[j][k+i] += dp[j-1][k];
-                    dp[j][k+i] %= mod;
+        for(int i = 1; i <= m; i++){  // 今採用することを検討している数
+            vector<vector<int>> dp2 = dp;
+            for(int j = n*n; j >= 1; j--){ // iを含めて、選択した要素数
+                for(int k = s; k >= 0; k--){ // 今iを採用した時の選択した要素数の総和
+                    if(k >= i)  dp2[j][k] = (dp2[j][k] + dp[j-1][k-i])%mod; // iを使う
                 }
             }
+            dp = dp2;
         }
-
-        cout << dp[n][s] << endl;
+        cout << dp[n*n][s] << endl;
     }
     return 0;
 }
