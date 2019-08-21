@@ -33,7 +33,7 @@ int ccw(Point p0, Point p1, Point p2);
 bool intersect(Point p1, Point p2, Point p3, Point p4);
 bool intersect(Segment s1, Segment s2);
 bool intersect(Circle c, Line l); // 誤差の検証をしていない
-bool intersect(Circle c1, Circle c2); // 誤差の検証をしていない
+bool intersect(Circle c1, Circle c2);
 
 Point project(Segment s, Point p);
 Point reflect(Segment s, Point p);
@@ -42,7 +42,7 @@ pair<Point,Point> getCrossPoints(Circle c, Line l);
 pair<Point,Point> getCrossPoints(Circle c1, Circle c2); // 誤差の検証をしていない
 pair<Point,Point> getContactPoints(Circle c, Point p); // 接点 点は円の外部
 
-double area(Polygon g); // convexでなくてもよい. absを消せば符号付き面積
+double area(Polygon g); // convexでなくてもよい. absを取れば符号付き面積
 bool isConvex(Polygon g); // O(n^2) 線形時間アルゴリズムが存在するらしい
 int contains(Polygon g, Point p);
 
@@ -50,7 +50,6 @@ double arg(Vector p);   // 偏角
 Vector polar(double a, double r); // 極座標系->ベクトル
 
 Polygon andrewScan(Polygon g); // 凸包の辺上の点も含めたければ!=CLOCKWISEを==COUNTER_CLOCKWISEに
-double convexDiameter(Polygon g); // gはconvex 
 
 
 struct Point{
@@ -295,40 +294,59 @@ Polygon andrewScan(Polygon g){
     return l;
 }
 
-double convexDiameter(Polygon g){
-    double d = 0.0;
-    int n = g.size();
-    int is = 0, js = 0;
-    for(int i = 1; i < n; i++){
-        if(g[i].y > g[is].y)    is = i;
-        if(g[i].y < g[js].y)    js = i;
-    }
-    d = getDistance(g[is], g[js]);
 
-    int i = is, j = js, maxi = is, maxj = js;
-    do{
-        if(cross(g[(i+1)%n]-g[i], g[(j+1)%n]-g[j]) >= 0.0)  j = (j+1)%n;
-        else    i = (i+1)%n;
-        if(getDistance(g[i], g[j]) > d){
-            d = getDistance(g[i], g[j]);
-            maxi = i, maxj = j;
+Polygon f(Polygon g){
+    Polygon u, l;
+    if(g.size() < 3)    return g;
+    sort(g.begin(), g.end());
+    u.push_back(g[0]);
+    u.push_back(g[1]);
+    l.push_back(g[g.size()-1]);
+    l.push_back(g[g.size()-2]);
+
+    // upper
+    for(int i = 2; i < g.size(); i++){
+        for(int n = u.size(); n >= 2 && ccw(u[n-2], u[n-1], g[i]) == COUNTER_CLOCKWISE; n--){
+            u.pop_back();
         }
-    }while(i != is || j != js);
+        u.push_back(g[i]);
+    }
 
-    return d; // farthest pair is (maxi, maxj).
+    // lower
+    for(int i = g.size()-3; i >= 0; i--){
+        for(int n = l.size(); n >= 2 && ccw(l[n-2], l[n-1], g[i]) == COUNTER_CLOCKWISE; n--){
+            l.pop_back();
+        }
+        l.push_back(g[i]);
+    }
+
+    reverse(l.begin(), l.end());
+    for(int i = u.size()-2; i >= 1; i--)    l.push_back(u[i]);
+
+    return l;
 }
-
-
 
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int n;
+    cin >> n;
+    Polygon g;
+    for(int i = 0; i < n; i++){
+        double x, y;
+        cin >> x >> y;
+        g.push_back(Point(x,y));
+    }
+    Polygon conv = f(g);
+    cout << conv.size() << endl;
+    int from = 0;
+    for(int i = 1; i < conv.size(); i++){
+        if(conv[i].y < conv[from].y || (conv[i].y==conv[from].y && conv[i].x<conv[from].x)){
+            from = i;
+        }
+    }
+    for(int i = 0; i < conv.size(); i++){
+        int x = (from + i) % conv.size();
+        cout << conv[x].x << " " << conv[x].y << endl;
+    }
     return 0;
 }
+

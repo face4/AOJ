@@ -321,14 +321,32 @@ double convexDiameter(Polygon g){
 
 
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int n;
+    cin >> n;
+    Polygon g;
+    for(int i = 0; i < n; i++){
+        double x, y;
+        cin >> x >> y;
+        g.push_back(Point(x,y));
+    }
+    int q;
+    cin >> q;
+    while(q-- > 0){
+        double px, py, qx, qy;
+        cin >> px >> py >> qx >> qy;
+        Point a(px,py), b(qx,qy);
+        Vector diff = b-a;
+        a = a-diff*10001;
+        b = b+diff*10001;
+        Polygon h;
+        for(int i = 0; i < n; i++){
+            if(!isParallel(g[i], g[(i+1)%n], a, b) && intersect(g[i], g[(i+1)%n], a, b)) h.push_back(getCrossPoint(Segment(g[i], g[(i+1)%n]), Segment(a, b)));
+        }
+        for(int i = 0; i < n; i++){
+            if(cross(b-a, g[i]-a) >= 0.0)   h.push_back(g[i]);
+        }
+        h = andrewScan(h);
+        cout << fixed << setprecision(12) << area(h) << endl;
+    }
     return 0;
 }

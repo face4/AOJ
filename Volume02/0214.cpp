@@ -219,6 +219,7 @@ pair<Point,Point> getContactPoints(Circle c, Point p){
 }
 
 double area(Polygon g){
+    if(g.size() < 3)    return 0;
     int n = g.size();
     Point o(0.0, 0.0);
     double s = 0.0;
@@ -318,17 +319,66 @@ double convexDiameter(Polygon g){
     return d; // farthest pair is (maxi, maxj).
 }
 
+struct UF{
+    vector<int> p;
+    int n;
 
+    UF(int siz){
+        n = siz;
+        p.resize(n, 0);
+        for(int i = 0; i < n; i++)  p[i] = i;
+    }
+
+    int parent(int x){
+        if(p[x] != x)   p[x] = parent(p[x]);
+        return p[x];
+    }
+
+    void unite(int x, int y){
+        x = parent(x), y = parent(y);
+        p[x] = y;
+    }
+};
 
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int q;
+    while(cin >> q, q){
+        while(q-- > 0){
+            int n;
+            cin >> n;
+            Polygon g[n];
+            for(int i = 0; i < n; i++){
+                for(int j = 0; j < 4; j++){
+                    double x, y;
+                    cin >> x >> y;
+                    g[i].push_back(Point(x,y));
+                }
+            }
+            UF uf(n);
+            for(int i = 0; i < n; i++){
+                for(int j = 0; j < n; j++){
+                    bool judge = true;
+                    for(int k = 0; k < 4; k++){
+                        judge &= contains(g[j], g[i][k])!=0;
+                    }
+                    for(int k = 0; k < 4; k++){
+                        for(int l = 0; l < 4; l++){
+                            judge |= intersect(g[i][k], g[i][(k+1)%4], g[j][l], g[j][(l+1)%4]);
+                            if(isParallel(g[i][k], g[i][(k+1)%4], g[j][l], g[j][(l+1)%4])){
+                                if(ccw(g[j][l], g[j][(l+1)%4], g[i][k]) == ON_SEGMENT)  judge = true;
+                                if(ccw(g[j][l], g[j][(l+1)%4], g[i][(k+1)%4]) == ON_SEGMENT)  judge = true;
+                            }
+                        }
+                    }
+                    if(judge)   uf.unite(i, j);
+                }
+            }
+            vector<int> ans;
+            for(int i = 0; i < n; i++)  ans.push_back(uf.parent(i));
+            sort(ans.begin(), ans.end());
+            ans.erase(unique(ans.begin(),ans.end()), ans.end());
+            cout << ans.size() << endl;
+        }
+    }
     return 0;
 }

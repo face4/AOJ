@@ -32,25 +32,15 @@ bool isParallel(Segment s1, Segment s2);
 int ccw(Point p0, Point p1, Point p2);
 bool intersect(Point p1, Point p2, Point p3, Point p4);
 bool intersect(Segment s1, Segment s2);
-bool intersect(Circle c, Line l); // 誤差の検証をしていない
-bool intersect(Circle c1, Circle c2); // 誤差の検証をしていない
+bool intersect(Circle c, Line l); // ちゃんと検証はしてない
 
 Point project(Segment s, Point p);
 Point reflect(Segment s, Point p);
 Point getCrossPoint(Segment s1, Segment s2);
 pair<Point,Point> getCrossPoints(Circle c, Line l);
-pair<Point,Point> getCrossPoints(Circle c1, Circle c2); // 誤差の検証をしていない
-pair<Point,Point> getContactPoints(Circle c, Point p); // 接点 点は円の外部
 
-double area(Polygon g); // convexでなくてもよい. absを消せば符号付き面積
+double area(Polygon g); // convexでなくてもよい. absを取れば符号付き面積
 bool isConvex(Polygon g); // O(n^2) 線形時間アルゴリズムが存在するらしい
-int contains(Polygon g, Point p);
-
-double arg(Vector p);   // 偏角
-Vector polar(double a, double r); // 極座標系->ベクトル
-
-Polygon andrewScan(Polygon g); // 凸包の辺上の点も含めたければ!=CLOCKWISEを==COUNTER_CLOCKWISEに
-double convexDiameter(Polygon g); // gはconvex 
 
 
 struct Point{
@@ -154,6 +144,7 @@ static const int CLOCKWISE = -1;
 static const int ONLINE_BACK = 2;   // p2->p0->p1
 static const int ONLINE_FRONT = -2; // p0->p1->p2
 static const int ON_SEGMENT = 0;    // p0->p2->p1
+
 int ccw(Point p0, Point p1, Point p2){
     Vector a = p1 - p0;
     Vector b = p2 - p0;
@@ -173,9 +164,6 @@ bool intersect(Segment s1, Segment s2){
 }
 bool intersect(Circle c, Line l){
     return getDistanceLP(l, c.c) < c.r+EPS;
-}
-bool intersect(Circle c1, Circle c2){
-    return abs(c1.r-c2.r) <= getDistance(c1.c, c2.c) && getDistance(c1.c, c2.c) < c1.r+c2.r+EPS;
 }
 
 Point project(Segment s, Point p){
@@ -204,26 +192,12 @@ pair<Point,Point> getCrossPoints(Circle c, Line l){
     return make_pair(pr + e*base, pr - e*base);
 }
 
-pair<Point,Point> getCrossPoints(Circle c1, Circle c2){
-    assert(intersect(c1, c2));
-    double d = abs(c1.c - c2.c);
-    double a = acos( (c1.r*c1.r + d*d - c2.r*c2.r)/(2*c1.r*d) );
-    double t = arg(c2.c - c1.c);
-    return make_pair(c1.c + polar(c1.r, t+a), c1.c + polar(c1.r, t-a));
-}
-
-pair<Point,Point> getContactPoints(Circle c, Point p){
-    assert(c.r < getDistance(c.c, p));
-    double d = getDistance(c.c, p);
-    return getCrossPoints(c, Circle(p, sqrt(d*d-c.r*c.r)));
-}
-
 double area(Polygon g){
     int n = g.size();
     Point o(0.0, 0.0);
-    double s = 0.0;
-    for(int i = 0; i < n; i++)  s += cross(g[i]-o, g[(i+1)%n]-o);
-    return abs(s) / 2.0;
+    double res = 0.0;
+    for(int i = 0; i < n; i++)  res += cross(g[i]-o, g[(i+1)%n]-o);
+    return abs(res) / 2.0;
 }
 
 bool isConvex(Polygon g){
@@ -239,96 +213,15 @@ bool isConvex(Polygon g){
     return ret;
 }
 
-static const int IN = 2;
-static const int ON = 1;
-static const int OUT = 0;
-int contains(Polygon g, Point p){
-    int n = g.size();
-    bool x = false;
-    for(int i = 0; i < n; i++){
-        Point a = g[i] - p, b = g[(i+1)%n] - p;
-        if(abs(cross(a, b)) < EPS && dot(a, b) < EPS)   return ON;
-        if(a.y > b.y)   swap(a, b);
-        if(a.y < EPS && EPS < b.y && cross(a, b) > EPS) x = !x;
-    }
-    return x ? IN : OUT;
-}
-
-
-double arg(Vector p){
-    return atan2(p.y, p.x);
-}
-
-Vector polar(double a, double r){
-    return Point(a * cos(r), a * sin(r));
-}
-
-
-Polygon andrewScan(Polygon g){
-    Polygon u, l;
-    if(g.size() < 3)    return g;
-    sort(g.begin(), g.end());
-    u.push_back(g[0]);
-    u.push_back(g[1]);
-    l.push_back(g[g.size()-1]);
-    l.push_back(g[g.size()-2]);
-
-    // upper
-    for(int i = 2; i < g.size(); i++){
-        for(int n = u.size(); n >= 2 && ccw(u[n-2], u[n-1], g[i]) != CLOCKWISE; n--){
-            u.pop_back();
-        }
-        u.push_back(g[i]);
-    }
-
-    // lower
-    for(int i = g.size()-3; i >= 0; i--){
-        for(int n = l.size(); n >= 2 && ccw(l[n-2], l[n-1], g[i]) != CLOCKWISE; n--){
-            l.pop_back();
-        }
-        l.push_back(g[i]);
-    }
-
-    reverse(l.begin(), l.end());
-    for(int i = u.size()-2; i >= 1; i--)    l.push_back(u[i]);
-
-    return l;
-}
-
-double convexDiameter(Polygon g){
-    double d = 0.0;
-    int n = g.size();
-    int is = 0, js = 0;
-    for(int i = 1; i < n; i++){
-        if(g[i].y > g[is].y)    is = i;
-        if(g[i].y < g[js].y)    js = i;
-    }
-    d = getDistance(g[is], g[js]);
-
-    int i = is, j = js, maxi = is, maxj = js;
-    do{
-        if(cross(g[(i+1)%n]-g[i], g[(j+1)%n]-g[j]) >= 0.0)  j = (j+1)%n;
-        else    i = (i+1)%n;
-        if(getDistance(g[i], g[j]) > d){
-            d = getDistance(g[i], g[j]);
-            maxi = i, maxj = j;
-        }
-    }while(i != is || j != js);
-
-    return d; // farthest pair is (maxi, maxj).
-}
-
-
-
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int n;
+    cin >> n;
+    Polygon g;
+    for(int i = 0; i < n; i++){
+        double x, y;
+        cin >> x >> y;
+        g.push_back(Point(x,y));
+    }
+    cout << isConvex(g) << endl;
     return 0;
 }

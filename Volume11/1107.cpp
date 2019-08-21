@@ -219,6 +219,7 @@ pair<Point,Point> getContactPoints(Circle c, Point p){
 }
 
 double area(Polygon g){
+    if(g.size() < 3)    return 0;
     int n = g.size();
     Point o(0.0, 0.0);
     double s = 0.0;
@@ -318,17 +319,40 @@ double convexDiameter(Polygon g){
     return d; // farthest pair is (maxi, maxj).
 }
 
-
+double func(Point a, Point b, Point c){
+    Vector A = c-b, B = c-a, C = b-a;
+    return (norm(B)+norm(C)-norm(A))/(2*abs(B)*abs(C));
+}
 
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int n;
+    while(cin >> n, n){
+        vector<bool> used(n, 0);
+        vector<Point> vp(n);
+        for(int i = 0; i < n; i++){
+            cin >> vp[i].x >> vp[i].y;
+        }
+        Point a(0, 0), b(0, 1);
+        double ans = 0;
+        for(int i = 0; i < n; i++){
+            double val, dist, tmp;
+            int next = -1;
+            for(int j = 0; j < n; j++){
+                if(used[j]) continue;
+                if(next == -1 || func(a, b, vp[j]) > val+EPS/*ここでWAが消えた、ただの誤差ゲー*/ || (equals(func(a,b,vp[j]),val) && getDistance(a,vp[j]) < tmp)){
+                    next = j;
+                    val = func(a, b, vp[j]);
+                    tmp = getDistance(a, vp[j]);
+                }
+            }
+            ans += tmp;
+            used[next] = true;
+            Vector diff = vp[next]-a;
+            a = vp[next];
+            b = a + diff;
+        }
+        ans = (int)(ans*10+0.5) / 10.0;
+        printf("%.1f\n", ans);
+    }
     return 0;
 }

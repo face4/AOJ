@@ -6,7 +6,7 @@
 #include<cassert>
 using namespace std;
 
-#define EPS (1e-10)
+#define EPS (1e-5)
 #define equals(a, b) (fabs((a) - (b)) < EPS)
 
 struct Point;
@@ -219,6 +219,7 @@ pair<Point,Point> getContactPoints(Circle c, Point p){
 }
 
 double area(Polygon g){
+    if(g.size() < 3)    return 0;
     int n = g.size();
     Point o(0.0, 0.0);
     double s = 0.0;
@@ -318,17 +319,40 @@ double convexDiameter(Polygon g){
     return d; // farthest pair is (maxi, maxj).
 }
 
-
-
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int a, b, c, d;
+    Point p[6];
+    while(cin >> a >> b >> c >> d, a!=0||b!=0||c!=0||d!=0){
+        p[0] = Point(a, b), p[1] = Point(c, d);
+        cin >> a >> b >> c >> d;
+        p[2] = Point(a, b), p[3] = Point(c, d);
+        cin >> a >> b >> c >> d;
+        p[4] = Point(a, b), p[5] = Point(c, d);
+        Polygon g;
+        bool valid = true;
+        for(int i = 0; i < 3; i++){
+            for(int j = i+1; j < 3; j++){
+                if(intersect(p[2*i], p[2*i+1], p[2*j], p[2*j+1])){
+                    g.push_back(getCrossPoint(Segment(p[2*i], p[2*i+1]), Segment(p[2*j], p[2*j+1])));
+                }else{
+                    valid = false;
+                }
+            }
+        }
+        for(int i = 0; i < g.size(); i++){
+            for(int j = i+1; j < g.size(); j++){
+                if(equals(g[i].x,g[j].x) && equals(g[i].y,g[j].y))  valid = false;
+            }
+        }
+        if(!valid){
+            cout << "kyo" << endl;
+            continue;
+        }
+        double s = area(g);
+        if(s >= 1900000)        cout << "dai-kichi" << endl;
+        else if(s >= 1000000)   cout << "chu-kichi" << endl;
+        else if(s >= 100000)    cout << "kichi" << endl;
+        else                    cout << "syo-kichi" << endl;
+    }
     return 0;
 }

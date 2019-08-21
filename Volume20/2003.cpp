@@ -219,6 +219,7 @@ pair<Point,Point> getContactPoints(Circle c, Point p){
 }
 
 double area(Polygon g){
+    if(g.size() < 3)    return 0;
     int n = g.size();
     Point o(0.0, 0.0);
     double s = 0.0;
@@ -318,17 +319,30 @@ double convexDiameter(Polygon g){
     return d; // farthest pair is (maxi, maxj).
 }
 
-
-
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int q;
+    cin >> q;
+    while(q-- > 0){
+        Point a, b;
+        cin >> a.x >> a.y >> b.x >> b.y;
+        int n;
+        cin >> n;
+        vector<pair<double,int>> v;
+        for(int i = 0; i < n; i++){
+            Point s, t;
+            int o, l;
+            cin >> s.x >> s.y >> t.x >> t.y >> o >> l;
+            l = (l + 1-o)%2;
+            if(intersect(s, t, a, b)){
+                v.push_back({getDistance(a, getCrossPoint(Segment(a,b), Segment(s,t))), l});
+            }
+        }
+        sort(v.begin(), v.end());
+        int ans = 0;
+        for(int i = 1; i < v.size(); i++){
+            ans += (v[i].second!=v[i-1].second);
+        }
+        cout << ans << endl;
+    }
     return 0;
 }

@@ -219,6 +219,7 @@ pair<Point,Point> getContactPoints(Circle c, Point p){
 }
 
 double area(Polygon g){
+    if(g.size() < 3)    return 0;
     int n = g.size();
     Point o(0.0, 0.0);
     double s = 0.0;
@@ -319,16 +320,48 @@ double convexDiameter(Polygon g){
 }
 
 
+bool f(Polygon g, Circle c){
+    bool ret = true;
+    int n = g.size();
+    for(int i = 0; i < n; i++){
+        ret &= getDistanceSP(Segment(g[i], g[(i+1)%n]), c.c) >= c.r;
+    }
+    return ret;
+}
+
+bool h(Polygon g, Circle c){
+    bool ret = true;
+    int n = g.size();
+    for(int i = 0; i < n; i++){
+        ret &= getDistance(c.c, g[i]) <= c.r;
+    }
+    return ret;
+}
+
+bool e(Polygon g, Circle c){
+    bool ret = false;
+    int n = g.size(); 
+    for(int i = 0; i < n; i++){
+        ret |= getDistanceSP(Segment(g[i], g[(i+1)%n]), c.c) <= c.r;
+    }
+    return ret;
+}
 
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    double x, y, r;
+    while(cin >> x >> y, x+y != 0.0){
+        Polygon g;
+        g.push_back(Point(x,y));
+        cin >> x >> y;
+        g.push_back(Point(x,y));
+        cin >> x >> y;
+        g.push_back(Point(x,y));
+        cin >> x >> y >> r;
+        Circle c(Point(x,y), r);
+        if(contains(g, c.c)==2 && f(g, c))  cout << "a" << endl;
+        else if(h(g, c))                    cout << "b" << endl;
+        else if(e(g, c))                    cout << "c" << endl;
+        else                                cout << "d" << endl;
+    }
     return 0;
 }

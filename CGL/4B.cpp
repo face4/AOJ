@@ -33,7 +33,7 @@ int ccw(Point p0, Point p1, Point p2);
 bool intersect(Point p1, Point p2, Point p3, Point p4);
 bool intersect(Segment s1, Segment s2);
 bool intersect(Circle c, Line l); // 誤差の検証をしていない
-bool intersect(Circle c1, Circle c2); // 誤差の検証をしていない
+bool intersect(Circle c1, Circle c2);
 
 Point project(Segment s, Point p);
 Point reflect(Segment s, Point p);
@@ -42,7 +42,7 @@ pair<Point,Point> getCrossPoints(Circle c, Line l);
 pair<Point,Point> getCrossPoints(Circle c1, Circle c2); // 誤差の検証をしていない
 pair<Point,Point> getContactPoints(Circle c, Point p); // 接点 点は円の外部
 
-double area(Polygon g); // convexでなくてもよい. absを消せば符号付き面積
+double area(Polygon g); // convexでなくてもよい. absを取れば符号付き面積
 bool isConvex(Polygon g); // O(n^2) 線形時間アルゴリズムが存在するらしい
 int contains(Polygon g, Point p);
 
@@ -50,8 +50,7 @@ double arg(Vector p);   // 偏角
 Vector polar(double a, double r); // 極座標系->ベクトル
 
 Polygon andrewScan(Polygon g); // 凸包の辺上の点も含めたければ!=CLOCKWISEを==COUNTER_CLOCKWISEに
-double convexDiameter(Polygon g); // gはconvex 
-
+double convexDiameter(Polygon g); // gはconvex 検証済みだが理屈はわかっていない
 
 struct Point{
     double x, y;
@@ -321,14 +320,15 @@ double convexDiameter(Polygon g){
 
 
 int main(){
-    double a[6];
-    for(int i = 0; i < 6; i++)  cin >> a[i];
-    Circle b(Point(a[0],a[1]),a[2]), c(Point(a[3],a[4]),a[5]);
-    double d = getDistance(b.c, c.c);
-    if(d < fabs(b.r-c.r))       cout << 0 << endl;
-    else if(d == fabs(b.r-c.r)) cout << 1 << endl;
-    else if(d < b.r+c.r)        cout << 2 << endl;
-    else if(d == b.r+c.r)       cout << 3 << endl;
-    else                        cout << 4 << endl;
+    int n;
+    cin >> n;
+    Polygon g;
+    for(int i = 0; i < n; i++){
+        double x, y;
+        cin >> x >> y;
+        g.push_back(Point(x,y));
+    }
+    cout << fixed << setprecision(12) << convexDiameter(g) << endl;
     return 0;
 }
+
